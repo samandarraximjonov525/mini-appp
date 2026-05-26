@@ -1,100 +1,96 @@
-# 📂 DigiPro Telegram Mini‑App CRM - Loyiha Tasnifi (Project Overview)
+# DigiPro Hub — Deploy Qo'llanmasi
 
-Bu hujjat loyihaning to'liq arxitekturasi, ma'lumotlar oqimi va asosiy funksiyalarini boshqa dasturchilarga yoki AI-assistentlarga tushuntirish uchun tayyorlangan.
-
-## 1️⃣ Umumiy Arxitektura (High-level Architecture)
-
-```text
-┌─────────────────────┐          ┌─────────────────────┐
-│  Telegram Mini‑App  │  HTTPS   │   FastAPI Backend   │
-│  (Frontend)         ◀───────▶ │ (mini_app/backend) │
-│  - HTML/CSS/JS      │          │ - REST API          │
-│  - Vercel'da        │          │ - SQLite DB         │
-└─────────────────────┘          └─────────────────────┘
-          ▲                                 ▲
-          │                                 │
-          ▼                                 ▼
-┌─────────────────────┐          ┌─────────────────────┐
-│  Telegram Bot (TG)  │  Bot ↔︎  │   Bot Logic (bot.py)│
-│                     │◀───────▶│ - Buyurtma xabari   │
-│                     │          │ - Chat xabarlari    │
-└─────────────────────┘          └─────────────────────┘
+## Loyiha tuzilishi
+```
+deploy/
+├── backend/
+│   ├── main.py          ← FastAPI server (API)
+│   ├── bot.py           ← Telegram Bot
+│   ├── requirements.txt ← Python kutubxonalar
+│   └── .env.example     ← Environment variables namunasi
+├── frontend/
+│   ├── index.html       ← Mini App (asosiy sahifa)
+│   └── admin.html       ← Admin Panel
+└── vercel.json          ← Vercel konfiguratsiya
 ```
 
-* **Frontend**: `mini_app/frontend` papkasida joylashgan. Sof HTML, CSS va Vanilla JS (Frameworksiz) da yozilgan. Hozirda **Vercel** tarmog'iga deploy qilingan (`https://y-six-green-92.vercel.app`).
-* **Backend**: `mini_app/backend/main.py` faylida **FastAPI** (Python 3.13) da yozilgan. Barcha API marshrutlari `/api/*` orqali ishlaydi. 
-* **Database**: `enterprise_bot.db` - **SQLite** bazasida barcha ma'lumotlar saqlanadi.
-* **Telegram Bot**: `mini_app/backend/bot.py` orqali **Aiogram 3.x** da yozilgan. Long-polling rejimida ishlaydi, admin va mijoz o'rtasidagi chat, shuningdek, buyurtma statusini yuborish uchun xizmat qiladi.
+---
+
+## 1-QADAM: VERCEL — Frontend + API Deploy
+
+### Vercel.com ga kirish
+1. https://vercel.com → GitHub bilan kirish
+2. **"New Project"** → GitHub repo tanlash
+3. **Root Directory** = bu `deploy` papkasi
+4. **Environment Variables** qo'shish:
+   - `BOT_TOKEN` = tokeningiz
+   - `ADMIN_CHAT_ID` = chat ID
+   - `ADMIN_PASSWORD` = parolingiz
+   - `WEBAPP_URL` = https://YOUR-APP.vercel.app
+   - `ADMIN_WEBAPP_URL` = https://YOUR-APP.vercel.app/admin
+
+5. **Deploy** tugmasini bosing
+
+### Deploy bo'lgandan keyin:
+- **Mini App**: https://YOUR-APP.vercel.app
+- **Admin Panel**: https://YOUR-APP.vercel.app/admin
+- **API**: https://YOUR-APP.vercel.app/api/...
 
 ---
 
-## 2️⃣ Ma'lumotlar Bazasi (SQLite / enterprise_bot.db)
+## 2-QADAM: BOT — Railway yoki VPS Deploy
 
-Asosiy jadvallar (Tables):
-1. **users**: `tg_id` (PK), `full_name`, `username` - Mini App'ga kirgan barcha foydalanuvchilarni ro'yxatga oladi.
-2. **services**: Xizmatlar ro'yxati (`name`, `price`, `icon`, `color`, `description`).
-3. **portfolio**: Ishlar namunasi (`title`, `category`, `image_url`).
-4. **promocodes**: Chegirmalar (`code`, `type` [PERCENT/FIXED/FREE], `value`).
-5. **orders**: Mijoz buyurtmalari (`id`, `user_tg_id`, `service`, `promo`, `status`, `price`).
-6. **messages**: Chat tizimi xabarlari (`id`, `sender_id`, `receiver_id`, `text`, `timestamp`, `is_read`).
+### Railway.app (Tavsiya etiladi — bepul)
+1. https://railway.app → kirish
+2. **New Project** → **Deploy from GitHub**
+3. **Settings → Variables** qo'shish:
+   ```
+   BOT_TOKEN=...
+   ADMIN_CHAT_ID=...
+   WEBAPP_URL=https://YOUR-APP.vercel.app
+   ADMIN_WEBAPP_URL=https://YOUR-APP.vercel.app/admin
+   DB_FILE=enterprise_bot.db
+   ```
+4. **Settings → Start Command**:
+   ```
+   python backend/bot.py
+   ```
 
----
-
-## 3️⃣ REST API Endpoints (FastAPI)
-
-* **Ochiq (Public) API'lar:**
-  * `GET /api/public/services` - Xizmatlarni yuklash
-  * `GET /api/public/portfolio` - Portfolioni yuklash
-  * `GET /api/public/promocodes/{code}` - Promokodni tekshirish
-  * `POST /api/public/orders` - Yangi buyurtma yuborish
-
-* **Admin va Chat API'lari:**
-  * `GET /api/admin/chat/conversations` - Admin panel chat sidebari uchun barcha suhbatlar ro'yxatini yuklaydi.
-  * `PUT /api/admin/chat/read/{user_id}` - Xabarlarni o'qilgan (is_read=1) qilib belgilaydi.
-  * `GET /api/chat/{user_id}` - Muayyan mijoz bilan bo'lgan barcha xabarlarni yuklaydi.
-  * `POST /api/chat/send` - Mijoz yoki admin xabar yozganda qabul qiladi va bot orqali bildirishnoma yuboradi.
-
----
-
-## 4️⃣ Frontend Mantig'i (UI Flow)
-
-* **Texnologiyalar**: Bootstrap 5 (CSS framework), SweetAlert2 (Bildirishnomalar), Telegram Web App JS (`telegram-web-app.js`).
-* **Asosiy qismlar**: 
-  - `showSec(id)` funksiyasi sahifalarni (Katalog, Ishlar, Chat, Buyurtma) SPA (Single Page Application) ko'rinishida o'zgartiradi.
-  - `checkPromo()` - API orqali promo-kod to'g'riligini tekshiradi va real vaqtda narxni yangilaydi (updatePrice).
-  - `loadMessages()` & `sendMessage()` - Har 5 soniyada yangi chat xabarlarini so'raydi (Polling) va ekranga chiqaradi.
-
----
-
-## 5️⃣ Telegram Bot Mantig'i (bot.py)
-
-* Telegram Web App (Mini App) orqali kirmagan paytlarda foydalanuvchilar bilan bot orqali aloqa ushlab turiladi.
-* Bot faqatgina "voqealar xabarchisi" (Notifier) sifatida ishlaydi:
-  - Mijoz Web App orqali xabar yozsa, adminga bot orqali xabar keladi.
-  - Admin Web App orqali buyurtmani tasdiqlasa (`Bajarildi`, `Bekor qilindi`), mijozga bot orqali status o'zgarganligi haqida xabar boradi.
-  - Admin Telegram orqali javob yozish imkoniga ega emas, faqat Admin Web Panel (`/admin`) orqali xabar qaytaradi.
-
----
-
-## 6️⃣ Qanday Qilib Ishga Tushiriladi? (Deployment & Run)
-
-**Mahalliy (Local) kompyuterda ishga tushirish:**
+### VPS (Ubuntu) orqali:
 ```bash
-# 1. Muhitni faollashtirish
-source .venv/bin/activate
+# Python o'rnatish
+sudo apt install python3 python3-pip -y
 
-# 2. API Serverni ishga tushirish (port 8080)
-python mini_app/backend/main.py
+# Papkaga kirish
+cd /path/to/deploy
 
-# 3. Telegram Botni ishga tushirish
-python mini_app/backend/bot.py
+# Kutubxonalar o'rnatish
+pip3 install -r backend/requirements.txt
+
+# Bot ishga tushirish
+python3 backend/bot.py
+
+# Yoki systemd service sifatida (doimiy ishlash)
 ```
 
-**Production Env Variables (`.env` faylda saqlanadi):**
-* `BOT_TOKEN` = Sizning bot tokeningiz
-* `ADMIN_CHAT_ID` = Adminning telegram ID rami (bildirishnomalar shunga yuboriladi)
-* `WEBAPP_URL` = Vercel domen manzili.
+---
 
-**Tavsiya etiladigan Deployment:**
-* Backend (`main.py`) va Bot (`bot.py`) -> **Railway.app**, **Render** yoki **VPS Ubuntu** serverda `Procfile` yordamida.
-* Frontend (`public/`) -> **Vercel** yoki **Netlify** orqali. Free hosting.
+## 3-QADAM: BOT TOKEN ni yangilash
+
+`bot.py` va `main.py` fayllarida URL ni yangilang:
+```python
+WEBAPP_URL = "https://YOUR-VERCEL-APP.vercel.app"
+ADMIN_WEBAPP_URL = "https://YOUR-VERCEL-APP.vercel.app/admin"
+```
+
+---
+
+## Admin Panel Kirish
+- URL: https://YOUR-APP.vercel.app/admin
+- Parol: `digipro_admin123` (o'zgartiring!)
+
+## Muhim Eslatmalar
+- ⚠️ Bot alohida serverda ishlashi KERAK (Vercel serverless bot uchun mos emas)
+- ⚠️ SQLite DB Vercel da saqlanmaydi — Railway yoki Supabase ishlatish tavsiya etiladi
+- ✅ Frontend + API → Vercel
+- ✅ Bot → Railway / VPS

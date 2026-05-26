@@ -1,0 +1,20 @@
+{
+  "version": 2,
+  "builds": [
+    { "src": "frontend/*.html", "use": "@vercel/static" },
+    { "src": "backend/main.py", "use": "@vercel/python" }
+  ],
+  "rewrites": [
+    { "source": "/api/(.*)", "destination": "backend/main.py" },
+    { "source": "/admin", "destination": "/frontend/admin.html" },
+    { "source": "/(.*)", "destination": "/frontend/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
+}

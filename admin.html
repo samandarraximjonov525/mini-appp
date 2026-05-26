@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#03030c">
+<title>DigiPro CRM v4</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<style>
+:root {
+  --bg:#03030c; --card:rgba(255,255,255,.04); --border:rgba(255,255,255,.08);
+  --cyan:#00f5c4; --purple:#7c6bff; --pink:#ff6b9d; --orange:#ff9f43;
+  --dim:rgba(243,244,246,.5); --ease:all .4s cubic-bezier(.23,1,.32,1);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:'Outfit',sans-serif;background:var(--bg);color:#f3f4f6;min-height:100vh;overflow-x:hidden}
+.glass{background:var(--card);backdrop-filter:blur(15px);border:1px solid var(--border);border-radius:16px;transition:var(--ease)}
+.header-bar{padding:20px 16px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100;background:rgba(3,3,12,.85);backdrop-filter:blur(12px)}
+.logo{font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;background:linear-gradient(135deg,#fff,var(--purple));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+/* Nav tabs */
+.crm-tabs{display:flex;gap:6px;padding:12px 16px;overflow-x:auto;scrollbar-width:none}
+.crm-tabs::-webkit-scrollbar{display:none}
+.tab-btn{flex:0 0 auto;padding:9px 18px;border-radius:40px;border:1px solid var(--border);color:var(--dim);font-weight:600;font-size:.82rem;background:none;display:flex;align-items:center;gap:7px;white-space:nowrap;transition:var(--ease)}
+.tab-btn.active{background:var(--purple);color:#fff;border-color:var(--purple);box-shadow:0 6px 18px rgba(124,107,255,.3)}
+/* Stats */
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;padding:0 16px 16px}
+@media(max-width:600px){.stat-grid{grid-template-columns:repeat(2,1fr)}}
+.stat-c{padding:16px;border-radius:16px}
+.s-val{font-family:'Syne',sans-serif;font-size:1.7rem;font-weight:800}
+.s-lbl{font-size:.65rem;color:var(--dim);text-transform:uppercase;letter-spacing:1px}
+/* Lists */
+.item-row{display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:10px;cursor:pointer}
+.item-row:hover{border-color:rgba(255,255,255,.15)}
+.ico-box{width:42px;height:42px;border-radius:12px;background:rgba(255,255,255,.05);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.badge-s{padding:3px 9px;border-radius:50px;font-size:.62rem;font-weight:800}
+.s-p{background:rgba(255,159,67,.15);color:var(--orange)}
+.s-ip{background:rgba(124,107,255,.15);color:var(--purple)}
+.s-c{background:rgba(0,245,196,.15);color:var(--cyan)}
+.s-x{background:rgba(255,107,107,.15);color:#ff6b6b}
+/* Chat */
+.chat-wrap{display:grid;grid-template-columns:280px 1fr;gap:0;height:calc(100vh - 200px);min-height:420px;border:1px solid var(--border);border-radius:16px;overflow:hidden}
+@media(max-width:700px){.chat-wrap{grid-template-columns:1fr;height:auto}}
+/* Conversations sidebar */
+.conv-sidebar{background:rgba(0,0,0,.3);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.conv-header{padding:14px 16px;border-bottom:1px solid var(--border);font-weight:700;font-size:.9rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.conv-search{padding:10px 12px;border-bottom:1px solid var(--border);flex-shrink:0}
+.conv-search input{width:100%;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:10px;padding:8px 12px;color:#fff;font-size:.82rem;outline:none}
+.conv-search input:focus{border-color:var(--cyan)}
+.conv-list{flex:1;overflow-y:auto;padding:6px}
+.conv-list::-webkit-scrollbar{width:3px}
+.conv-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.conv-item{padding:12px 14px;border-radius:12px;border:1px solid transparent;cursor:pointer;margin-bottom:4px;transition:var(--ease);display:flex;gap:11px;align-items:center}
+.conv-item:hover{background:rgba(255,255,255,.04);border-color:var(--border)}
+.conv-item.active{background:rgba(0,245,196,.06);border-color:rgba(0,245,196,.25)}
+.conv-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--purple),var(--pink));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem;flex-shrink:0}
+.conv-info{flex:1;min-width:0}
+.conv-name{font-weight:700;font-size:.85rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.conv-preview{font-size:.72rem;color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.conv-meta{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.conv-time{font-size:.63rem;color:var(--dim)}
+.unread-badge{background:var(--cyan);color:#03030c;border-radius:50px;font-size:.62rem;font-weight:800;padding:2px 7px;min-width:20px;text-align:center}
+/* Chat main */
+.chat-main{display:flex;flex-direction:column;background:rgba(0,0,0,.15)}
+.chat-top-bar{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0}
+.chat-user-info .name{font-weight:700;font-size:.9rem}
+.chat-user-info .sub{font-size:.72rem;color:var(--dim)}
+.chat-feed{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+.chat-feed::-webkit-scrollbar{width:3px}
+.chat-feed::-webkit-scrollbar-thumb{background:var(--border)}
+.chat-empty{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--dim);gap:8px}
+.msg{max-width:75%;padding:10px 14px;border-radius:18px;font-size:.87rem;line-height:1.5;word-break:break-word}
+.msg-a{align-self:flex-end;background:linear-gradient(135deg,var(--purple),#9b6bff);color:#fff;border-bottom-right-radius:4px}
+.msg-u{align-self:flex-start;background:rgba(255,255,255,.09);color:#fff;border-bottom-left-radius:4px}
+.msg-ts{font-size:.6rem;opacity:.5;display:block;margin-top:4px}
+.chat-input-bar{padding:14px 16px;border-top:1px solid var(--border);display:flex;gap:8px;flex-shrink:0}
+.chat-input-bar input{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:12px;padding:11px 16px;color:#fff;font-size:.88rem;outline:none;font-family:'Outfit',sans-serif}
+.chat-input-bar input:focus{border-color:var(--purple)}
+.send-btn{background:var(--purple);border:none;border-radius:12px;width:42px;height:42px;color:#fff;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:var(--ease);flex-shrink:0}
+.send-btn:hover{opacity:.85;transform:scale(1.05)}
+@media(max-width:700px){.conv-sidebar{max-height:300px}}
+/* Input */
+.inp{width:100%;background:rgba(255,255,255,.04);border:1px solid var(--border);border-radius:12px;padding:11px 14px;color:#fff;margin-bottom:12px;outline:none;font-family:'Outfit',sans-serif;font-size:.9rem}
+.inp:focus{border-color:var(--purple);box-shadow:0 0 0 3px rgba(124,107,255,.15)}
+.btn-p{background:var(--cyan);color:#03030c;border:none;padding:11px 20px;border-radius:12px;font-weight:700;cursor:pointer;transition:var(--ease);font-family:'Outfit',sans-serif}
+.btn-p:hover{transform:translateY(-1px);opacity:.9}
+/* Modal overlay */
+.modal-bg{position:fixed;inset:0;background:rgba(3,3,12,.92);z-index:3000;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-box{background:#0d0d18;border:1px solid var(--border);border-radius:22px;width:100%;max-width:440px;padding:28px;max-height:90vh;overflow-y:auto}
+</style>
+</head>
+<body>
+<div class="header-bar">
+  <div class="d-flex justify-content-between align-items-center">
+    <div class="logo">DIGIPRO CRM</div>
+    <div style="width:36px;height:36px;border-radius:50%;border:1px solid var(--cyan);display:flex;align-items:center;justify-content:center;color:var(--cyan);font-weight:800;font-size:.75rem">AD</div>
+  </div>
+</div>
+
+<div class="crm-tabs">
+  <button class="tab-btn active" id="t-orders"    onclick="tab('orders')"><i class="bi bi-list-task"></i> Buyurtmalar</button>
+  <button class="tab-btn"        id="t-chat"      onclick="tab('chat')"><i class="bi bi-chat-dots-fill"></i> Chat</button>
+  <button class="tab-btn"        id="t-broadcast" onclick="tab('broadcast')"><i class="bi bi-megaphone-fill"></i> E'lon</button>
+  <button class="tab-btn"        id="t-promos"    onclick="tab('promos')"><i class="bi bi-ticket-perforated-fill"></i> Promokod</button>
+  <button class="tab-btn"        id="t-services"  onclick="tab('services')"><i class="bi bi-grid-fill"></i> Xizmatlar</button>
+  <button class="tab-btn"        id="t-portfolio" onclick="tab('portfolio')"><i class="bi bi-images"></i> Portfolio</button>
+</div>
+
+<div class="stat-grid" id="stat-grid">
+  <div class="glass stat-c"><div class="s-lbl">Jami</div><div class="s-val" id="st-orders">—</div></div>
+  <div class="glass stat-c"><div class="s-lbl">Kutmoqda</div><div class="s-val" id="st-pending" style="color:var(--orange)">—</div></div>
+  <div class="glass stat-c"><div class="s-lbl">Xizmatlar</div><div class="s-val" id="st-services" style="color:var(--cyan)">—</div></div>
+  <div class="glass stat-c"><div class="s-lbl">Promokodlar</div><div class="s-val" id="st-promos" style="color:var(--purple)">—</div></div>
+</div>
+
+<main class="px-3 pb-5">
+
+  <!-- ORDERS -->
+  <section id="s-orders">
+    <div id="orders-list"></div>
+  </section>
+
+  <!-- CHAT -->
+  <section id="s-chat" style="display:none">
+    <div class="chat-wrap">
+      <!-- Conversations sidebar -->
+      <div class="conv-sidebar">
+        <div class="conv-header">
+          <span>💬 Suhbatlar</span>
+          <span id="total-unread" style="font-size:.72rem;color:var(--cyan)"></span>
+        </div>
+        <div class="conv-search">
+          <input id="conv-search-inp" placeholder="Qidirish..." oninput="filterConvs(this.value)">
+        </div>
+        <div class="conv-list" id="conv-list">
+          <p class="text-center text-white-50 p-4 small">Yuklanmoqda...</p>
+        </div>
+      </div>
+      <!-- Chat main area -->
+      <div class="chat-main">
+        <div class="chat-top-bar" id="chat-top-bar">
+          <div class="conv-avatar" id="chat-avatar" style="width:36px;height:36px;font-size:.8rem">—</div>
+          <div class="chat-user-info">
+            <div class="name" id="chat-user-name">Foydalanuvchi tanlanmagan</div>
+            <div class="sub" id="chat-user-sub">← Chapdan suhbat tanlang</div>
+          </div>
+        </div>
+        <div class="chat-feed" id="chat-feed">
+          <div class="chat-empty">
+            <i class="bi bi-chat-dots" style="font-size:2.5rem;opacity:.3"></i>
+            <span>Suhbat tanlang</span>
+          </div>
+        </div>
+        <div class="chat-input-bar">
+          <input id="admin-msg-inp" placeholder="Javob yozing..." onkeydown="if(event.key==='Enter')sendAdminMsg()">
+          <button class="send-btn" onclick="sendAdminMsg()"><i class="bi bi-send-fill"></i></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- BROADCAST -->
+  <section id="s-broadcast" style="display:none">
+    <div class="glass p-4">
+      <h5 class="mb-3" style="font-family:'Syne',sans-serif">📢 Barcha foydalanuvchilarga xabar</h5>
+      <p class="small mb-3" style="color:var(--dim)">Bu xabar botdan foydalangan barcha foydalanuvchilarga Telegram orqali yuboriladi.</p>
+      <textarea class="inp" id="bc-text" rows="5" placeholder="Xabar matnini yozing..."></textarea>
+      <button class="btn-p w-100" onclick="sendBroadcast()">📢 Yuborish</button>
+    </div>
+  </section>
+
+  <!-- PROMOS -->
+  <section id="s-promos" style="display:none">
+    <button class="btn-p mb-3" onclick="openModal('promo')">+ Yangi Promokod</button>
+    <div id="promos-list"></div>
+  </section>
+
+  <!-- SERVICES -->
+  <section id="s-services" style="display:none">
+    <button class="btn-p mb-3" onclick="openSrvModal()">+ Yangi Xizmat</button>
+    <div id="services-list"></div>
+  </section>
+
+  <!-- PORTFOLIO -->
+  <section id="s-portfolio" style="display:none">
+    <button class="btn-p mb-3" onclick="openModal('portfolio')">+ Yangi Ish</button>
+    <div id="portfolio-list"></div>
+  </section>
+
+</main>
+
+<!-- ORDER DETAIL MODAL -->
+<div class="modal-bg" id="modal-order">
+  <div class="modal-box">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h5 style="font-family:'Syne',sans-serif" id="ord-detail-title">Buyurtma</h5>
+      <button onclick="closeModal()" style="background:none;border:none;color:#fff;font-size:1.3rem">&times;</button>
+    </div>
+    <div id="ord-detail-body"></div>
+    <div class="d-flex gap-2 mt-4 flex-wrap">
+      <button class="btn-p flex-grow-1" id="ord-status-btn" onclick="changeOrderStatus()">✅ Boshlash</button>
+      <button class="btn-p flex-grow-1" style="background:var(--purple)" onclick="chatWithUser()"><i class="bi bi-chat-dots-fill"></i> Chat</button>
+      <button class="btn-p flex-grow-1" style="background:var(--orange);" onclick="openNotifyModal()"><i class="bi bi-send-fill"></i> Xabar</button>
+    </div>
+
+    <!-- Status buttons -->
+    <div class="d-flex gap-2 mt-2 flex-wrap" id="order-status-btns"></div>
+  </div>
+</div>
+
+<!-- NOTIFY MODAL -->
+<div class="modal-bg" id="modal-notify">
+  <div class="modal-box">
+    <h5 class="mb-3">Mijozga xabar yuborish</h5>
+    <textarea class="inp" id="notify-text" rows="4" placeholder="Yubormoqchi bo'lgan xabaringiz..."></textarea>
+    <button class="btn-p w-100" onclick="sendNotify()">Yuborish</button>
+    <button class="btn-link w-100 mt-2 text-white-50" onclick="closeModal()">Bekor qilish</button>
+  </div>
+</div>
+
+<!-- SERVICE MODAL -->
+<div class="modal-bg" id="modal-service">
+  <div class="modal-box">
+    <h5 class="mb-3" id="srv-modal-t">Xizmat</h5>
+    <input type="hidden" id="srv-id">
+    <input type="text"   id="srv-name"  class="inp" placeholder="Xizmat nomi">
+    <input type="number" id="srv-price" class="inp" placeholder="Narxi (UZS)">
+    <input type="text"   id="srv-icon"  class="inp" placeholder="Bootstrap-icon (bi-robot)">
+    <input type="text"   id="srv-color" class="inp" placeholder="Rang (#7c6bff)">
+    <textarea            id="srv-desc"  class="inp" rows="3" placeholder="Tavsif"></textarea>
+    <button class="btn-p w-100" onclick="saveService()">Saqlash</button>
+    <button class="btn-link w-100 mt-2 text-white-50" onclick="closeModal()">Bekor</button>
+  </div>
+</div>
+
+<!-- PROMO MODAL -->
+<div class="modal-bg" id="modal-promo">
+  <div class="modal-box">
+    <h5 class="mb-3">Yangi Promokod</h5>
+    <input type="text" id="p-code" class="inp" placeholder="Kod (BAYRAM2024)">
+    <select id="p-type" class="inp">
+      <option value="PERCENT">% Chegirma</option>
+      <option value="FIXED">Summa chegirma</option>
+      <option value="FREE">Bepul xizmat</option>
+    </select>
+    <input type="number" id="p-value" class="inp" placeholder="Qiymat (masalan: 20)">
+    <label class="small mb-1" style="color:var(--dim)">Yaroqlilik muddati</label>
+    <input type="date" id="p-expires" class="inp">
+    <button class="btn-p w-100" onclick="addPromo()">Saqlash</button>
+    <button class="btn-link w-100 mt-2 text-white-50" onclick="closeModal()">Bekor</button>
+  </div>
+</div>
+
+<!-- PORTFOLIO MODAL -->
+<div class="modal-bg" id="modal-portfolio">
+  <div class="modal-box">
+    <h5 class="mb-3">Yangi Portfolio</h5>
+    <input type="text" id="port-title" class="inp" placeholder="Loyiha nomi">
+    <input type="text" id="port-cat"   class="inp" placeholder="Kategoriya">
+    <input type="text" id="port-img"   class="inp" placeholder="Rasm URL (https://...)">
+    <textarea          id="port-desc"  class="inp" rows="2" placeholder="Tavsif (ixtiyoriy)"></textarea>
+    <button class="btn-p w-100" onclick="addPortfolio()">Saqlash</button>
+    <button class="btn-link w-100 mt-2 text-white-50" onclick="closeModal()">Bekor</button>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin.includes('localhost') ? 'http://localhost:8080' : window.location.origin;
+let activeUser = null;
+let activeOrder = null;
+
+// ── Tab switching ──────────────────────────────
+function tab(id) {
+  ['orders','chat','broadcast','promos','services','portfolio'].forEach(s => {
+    document.getElementById('s-'+s).style.display = 'none';
+    document.getElementById('t-'+s).classList.remove('active');
+  });
+  document.getElementById('s-'+id).style.display = 'block';
+  document.getElementById('t-'+id).classList.add('active');
+  const loaders = {orders:loadOrders,chat:loadChatUsers,promos:loadPromos,services:loadServices,portfolio:loadPortfolio};
+  loaders[id]?.();
+}
+
+// ── Modal helpers ──────────────────────────────
+function openModal(id) { document.getElementById('modal-'+id).style.display = 'flex'; }
+function closeModal()  { document.querySelectorAll('.modal-bg').forEach(m => m.style.display = 'none'); }
+
+// ── Stats ──────────────────────────────────────
+async function loadStats() {
+  const r = await fetch(`${API}/api/admin/stats`);
+  const d = await r.json();
+  document.getElementById('st-orders').textContent  = d.total_orders;
+  document.getElementById('st-pending').textContent = d.pending_orders;
+  document.getElementById('st-services').textContent= d.total_services;
+  document.getElementById('st-promos').textContent  = d.total_promos ?? '—';
+}
+
+// ── Orders ─────────────────────────────────────
+const statusMap = {
+  PENDING:     {label:'KUTMOQDA',   cls:'s-p', next:'IN_PROGRESS'},
+  IN_PROGRESS: {label:'BAJARILMOQDA', cls:'s-ip', next:'COMPLETED'},
+  COMPLETED:   {label:'BAJARILDI',  cls:'s-c', next:null},
+  CANCELLED:   {label:'BEKOR',      cls:'s-x', next:null},
+};
+
+async function loadOrders() {
+  const r = await fetch(`${API}/api/admin/orders`);
+  const orders = await r.json();
+  document.getElementById('orders-list').innerHTML = orders.map(o => `
+    <div class="glass item-row" onclick='openOrderDetail(${JSON.stringify(JSON.stringify(o))})'>
+      <div class="ico-box"><i class="bi bi-box-seam"></i></div>
+      <div class="flex-grow-1 overflow-hidden">
+        <div class="fw-bold text-truncate">${o.service} ${o.promo?`<small class="text-success">[${o.promo}]</small>`:''}</div>
+        <div style="font-size:.78rem;color:var(--dim)">${o.name} · ${o.contact}</div>
+        <div style="font-size:.7rem;color:var(--dim)">${o.created_at}</div>
+      </div>
+      <span class="badge-s ${statusMap[o.status]?.cls||'s-p'}">${statusMap[o.status]?.label||o.status}</span>
+    </div>
+  `).join('');
+}
+
+function openOrderDetail(encoded) {
+  const o = JSON.parse(encoded);
+  activeOrder = o;
+  document.getElementById('ord-detail-title').textContent = `Buyurtma: ${o.id}`;
+  const st = statusMap[o.status] || {label:o.status,cls:'s-p'};
+  document.getElementById('ord-detail-body').innerHTML = `
+    <div class="glass p-3 mb-3" style="border-radius:12px">
+      <div class="mb-2"><span style="color:var(--dim);font-size:.75rem">HOLAT</span><br>
+        <span class="badge-s ${st.cls}">${st.label}</span></div>
+      <div class="mb-2"><span style="color:var(--dim);font-size:.75rem">MIJOZ</span><br><b>${o.name}</b></div>
+      <div class="mb-2"><span style="color:var(--dim);font-size:.75rem">ALOQA</span><br><code>${o.contact}</code></div>
+      <div class="mb-2"><span style="color:var(--dim);font-size:.75rem">XIZMAT</span><br>${o.service}</div>
+      ${o.description ? `<div class="mb-2"><span style="color:var(--dim);font-size:.75rem">TAVSIF</span><br>${o.description}</div>` : ''}
+      ${o.promo ? `<div><span style="color:var(--dim);font-size:.75rem">PROMOKOD</span><br><span style="color:var(--cyan)">${o.promo}</span></div>` : ''}
+    </div>
+  `;
+  // Status change buttons
+  const btns = document.getElementById('order-status-btns');
+  btns.innerHTML = '';
+  const transitions = ['PENDING','IN_PROGRESS','COMPLETED','CANCELLED'].filter(s => s !== o.status);
+  transitions.forEach(s => {
+    const sm = statusMap[s];
+    const btn = document.createElement('button');
+    btn.className = `btn-p flex-grow-1 badge-s ${sm.cls}`;
+    btn.style.cssText = 'padding:8px 14px;border-radius:12px;font-size:.8rem;border:none;cursor:pointer';
+    btn.textContent = sm.label;
+    btn.onclick = () => changeOrderStatus(s);
+    btns.appendChild(btn);
+  });
+  openModal('order');
+}
+
+async function changeOrderStatus(newStatus) {
+  if(!activeOrder) return;
+  const r = await fetch(`${API}/api/admin/orders/${activeOrder.id}/status`, {
+    method:'PUT', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({status: newStatus})
+  });
+  if(r.ok) {
+    closeModal();
+    Swal.fire({icon:'success',title:'Status yangilandi',timer:1500,showConfirmButton:false,background:'#101018',color:'#fff'});
+    loadOrders(); loadStats();
+  }
+}
+
+function chatWithUser() {
+  if(!activeOrder?.user_tg_id) {
+    Swal.fire({icon:'warning',title:'Foydalanuvchi ID si mavjud emas',background:'#101018',color:'#fff'});
+    return;
+  }
+  closeModal();
+  activeUser = activeOrder.user_tg_id;
+  tab('chat');
+  setTimeout(loadMessages, 300);
+}
+
+function openNotifyModal() { closeModal(); openModal('notify'); }
+
+async function sendNotify() {
+  if(!activeOrder?.user_tg_id) { Swal.fire({icon:'warning',title:'TG ID mavjud emas',background:'#101018',color:'#fff'}); return; }
+  const text = document.getElementById('notify-text').value;
+  await fetch(`${API}/api/admin/notify`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({user_id: activeOrder.user_tg_id, text})
+  });
+  closeModal();
+  Swal.fire({icon:'success',title:'Xabar yuborildi!',timer:1500,showConfirmButton:false,background:'#101018',color:'#fff'});
+}
+
+// ── Chat with Conversations Sidebar ───────────────────
+let allConvs = [];
+
+function timeAgo(ts) {
+  if(!ts) return '';
+  const diff = Date.now() - new Date(ts).getTime();
+  const m = Math.floor(diff/60000);
+  if(m < 1) return 'Hozir';
+  if(m < 60) return `${m}d oldin`;
+  const h = Math.floor(m/60);
+  if(h < 24) return `${h}s oldin`;
+  return new Date(ts).toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'});
+}
+
+function initials(name) {
+  if(!name) return '?';
+  return name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+}
+
+async function loadChatUsers() { await loadConversations(); }
+
+async function loadConversations() {
+  try {
+    const r = await fetch(`${API}/api/admin/chat/conversations`);
+    allConvs = await r.json();
+    renderConvs(allConvs);
+    // Update total unread badge
+    const totalUnread = allConvs.reduce((s,c) => s + (c.unread||0), 0);
+    const badge = document.getElementById('total-unread');
+    badge.textContent = totalUnread > 0 ? `${totalUnread} o'qilmagan` : '';
+  } catch(e) { console.error('Conversations load error:', e); }
+}
+
+function renderConvs(convs) {
+  const el = document.getElementById('conv-list');
+  if(!convs.length) {
+    el.innerHTML = '<p class="text-center text-white-50 p-4 small" style="font-size:.8rem">Hali hech kim yozmagan</p>';
+    return;
+  }
+  el.innerHTML = convs.map(c => {
+    const av = initials(c.name || c.user_id);
+    const nm = c.name || `User ${c.user_id}`;
+    const preview = c.last_text ? (c.last_text.length > 32 ? c.last_text.slice(0,32)+'...' : c.last_text) : 'Xabar yo\'q';
+    const unread = c.unread > 0 ? `<span class="unread-badge">${c.unread}</span>` : '';
+    const active = activeUser == c.user_id ? 'active' : '';
+    return `
+      <div class="conv-item ${active}" id="conv-${c.user_id}" onclick="selectUser('${c.user_id}','${nm}','@${c.username||'n/a'}')">
+        <div class="conv-avatar">${av}</div>
+        <div class="conv-info">
+          <div class="conv-name">${nm}</div>
+          <div class="conv-preview">${preview}</div>
+        </div>
+        <div class="conv-meta">
+          <span class="conv-time">${timeAgo(c.last_ts)}</span>
+          ${unread}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function filterConvs(q) {
+  if(!q.trim()) { renderConvs(allConvs); return; }
+  const filtered = allConvs.filter(c => {
+    const nm = (c.name || c.user_id || '').toLowerCase();
+    return nm.includes(q.toLowerCase());
+  });
+  renderConvs(filtered);
+}
+
+async function selectUser(id, name, sub) {
+  activeUser = id;
+  // Update top bar
+  document.getElementById('chat-avatar').textContent = initials(name);
+  document.getElementById('chat-user-name').textContent = name;
+  document.getElementById('chat-user-sub').textContent = sub || id;
+  // Mark active item
+  document.querySelectorAll('.conv-item').forEach(el => el.classList.remove('active'));
+  const item = document.getElementById('conv-'+id);
+  if(item) item.classList.add('active');
+  // Mark as read
+  await fetch(`${API}/api/admin/chat/read/${id}`, {method:'PUT'});
+  // Remove unread badge in sidebar
+  const badge = item?.querySelector('.unread-badge');
+  if(badge) badge.remove();
+  loadMessages();
+}
+
+async function loadMessages() {
+  if(!activeUser) return;
+  const r = await fetch(`${API}/api/chat/${activeUser}`);
+  const msgs = await r.json();
+  const feed = document.getElementById('chat-feed');
+  if(!msgs.length) {
+    feed.innerHTML = '<div class="chat-empty"><i class="bi bi-chat" style="font-size:2rem;opacity:.3"></i><span>Hali xabar yo\'q</span></div>';
+    return;
+  }
+  feed.innerHTML = msgs.map(m => `
+    <div class="msg ${m.sender_id==='ADMIN' ? 'msg-a' : 'msg-u'}">
+      ${m.text}
+      <span class="msg-ts">${new Date(m.timestamp).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'})}</span>
+    </div>
+  `).join('');
+  feed.scrollTop = feed.scrollHeight;
+}
+
+async function sendAdminMsg() {
+  const inp = document.getElementById('admin-msg-inp');
+  if(!activeUser || !inp.value.trim()) return;
+  const text = inp.value;
+  inp.value = '';
+  await fetch(`${API}/api/chat/send`, {
+    method:'POST', headers:{'Content-Type':'application/json','X-User-ID':'ADMIN'},
+    body: JSON.stringify({receiver_id: activeUser, text})
+  });
+  loadMessages();
+  loadConversations();
+}
+
+// Auto-poll every 4s when chat tab is open
+setInterval(() => {
+  if(document.getElementById('s-chat').style.display==='block') {
+    loadConversations();
+    if(activeUser) loadMessages();
+  }
+}, 4000);
+
+// ── Broadcast ──────────────────────────────────
+async function sendBroadcast() {
+  const text = document.getElementById('bc-text').value.trim();
+  if(!text) return;
+  const r = await fetch(`${API}/api/admin/broadcast`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({text})
+  });
+  const d = await r.json();
+  Swal.fire({icon:'success',title:'Yuborildi!',text:`✅ ${d.sent} ta | ❌ ${d.failed} ta`,background:'#101018',color:'#fff'});
+  document.getElementById('bc-text').value = '';
+}
+
+// ── Promos ─────────────────────────────────────
+async function loadPromos() {
+  const r = await fetch(`${API}/api/admin/promocodes`);
+  const data = await r.json();
+  const el = document.getElementById('promos-list');
+  if(!data.length) { el.innerHTML = '<p class="text-white-50 text-center py-4">Promokodlar mavjud emas</p>'; return; }
+  el.innerHTML = data.map(p => {
+    const typeLabel = p.type==='PERCENT' ? `${p.value}% chegirma` : p.type==='FIXED' ? `${Number(p.value).toLocaleString()} UZS` : 'Bepul xizmat';
+    return `
+    <div class="glass item-row">
+      <div class="ico-box" style="color:var(--cyan)"><i class="bi bi-ticket-perforated-fill"></i></div>
+      <div class="flex-grow-1">
+        <div class="fw-bold">${p.code}</div>
+        <div style="font-size:.78rem;color:var(--dim)">${typeLabel} · ${p.expires_at || 'Muddatsiz'}</div>
+      </div>
+      <button onclick="deletePromo('${p.code}')" style="background:none;border:none;color:#ff6b6b;cursor:pointer"><i class="bi bi-trash"></i></button>
+    </div>`;
+  }).join('');
+}
+
+async function addPromo() {
+  const payload = {
+    code:       document.getElementById('p-code').value.toUpperCase(),
+    type:       document.getElementById('p-type').value,
+    value:      parseFloat(document.getElementById('p-value').value),
+    expires_at: document.getElementById('p-expires').value || null
+  };
+  if(!payload.code) { Swal.fire('Xatolik','Kodni to\'ldiring','error'); return; }
+  const r = await fetch(`${API}/api/admin/promocodes`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload)
+  });
+  if(r.ok) { closeModal(); loadPromos(); loadStats(); }
+}
+
+async function deletePromo(code) {
+  const { isConfirmed } = await Swal.fire({title:'O\'chirilsinmi?',icon:'warning',showCancelButton:true,confirmButtonColor:'#ff6b6b',background:'#101018',color:'#fff'});
+  if(!isConfirmed) return;
+  await fetch(`${API}/api/admin/promocodes/${code}`, {method:'DELETE'});
+  loadPromos(); loadStats();
+}
+
+// ── Services ───────────────────────────────────
+async function loadServices() {
+  const r = await fetch(`${API}/api/admin/services`);
+  const data = await r.json();
+  document.getElementById('services-list').innerHTML = data.map(s => `
+    <div class="glass item-row">
+      <div class="ico-box" style="color:${s.color}"><i class="bi ${s.icon}"></i></div>
+      <div class="flex-grow-1">
+        <div class="fw-bold">${s.name}</div>
+        <div style="font-size:.78rem;color:var(--dim)">${Number(s.price).toLocaleString()} UZS · ${s.description||'—'}</div>
+      </div>
+      <div class="d-flex gap-2">
+        <button onclick='editService(${JSON.stringify(JSON.stringify(s))})' style="background:none;border:none;color:var(--cyan);cursor:pointer"><i class="bi bi-pencil"></i></button>
+        <button onclick="deleteSrv('${s.id}')" style="background:none;border:none;color:#ff6b6b;cursor:pointer"><i class="bi bi-trash"></i></button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function openSrvModal() {
+  document.getElementById('srv-modal-t').textContent='Yangi Xizmat';
+  ['srv-id','srv-name','srv-price','srv-desc'].forEach(id => document.getElementById(id).value='');
+  document.getElementById('srv-icon').value='bi-robot';
+  document.getElementById('srv-color').value='#7c6bff';
+  openModal('service');
+}
+
+function editService(encoded) {
+  const s = JSON.parse(encoded);
+  document.getElementById('srv-modal-t').textContent='Xizmatni tahrirlash';
+  document.getElementById('srv-id').value=s.id;
+  document.getElementById('srv-name').value=s.name;
+  document.getElementById('srv-price').value=s.price;
+  document.getElementById('srv-icon').value=s.icon;
+  document.getElementById('srv-color').value=s.color;
+  document.getElementById('srv-desc').value=s.description||'';
+  openModal('service');
+}
+
+async function saveService() {
+  const id = document.getElementById('srv-id').value;
+  const payload = {
+    name:document.getElementById('srv-name').value, price:parseInt(document.getElementById('srv-price').value),
+    icon:document.getElementById('srv-icon').value, color:document.getElementById('srv-color').value,
+    description:document.getElementById('srv-desc').value
+  };
+  const r = await fetch(`${API}/api/admin/services${id?'/'+id:''}`, {
+    method:id?'PUT':'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload)
+  });
+  if(r.ok) { closeModal(); loadServices(); loadStats(); }
+}
+
+async function deleteSrv(id) {
+  const {isConfirmed} = await Swal.fire({title:"O'chirilsinmi?",icon:'warning',showCancelButton:true,confirmButtonColor:'#ff6b6b',background:'#101018',color:'#fff'});
+  if(!isConfirmed) return;
+  await fetch(`${API}/api/admin/services/${id}`,{method:'DELETE'});
+  loadServices();
+}
+
+// ── Portfolio ──────────────────────────────────
+async function loadPortfolio() {
+  const r = await fetch(`${API}/api/admin/portfolio`);
+  const data = await r.json();
+  const el = document.getElementById('portfolio-list');
+  if(!data.length) { el.innerHTML = '<p class="text-white-50 text-center py-4">Portfolio bo\'sh</p>'; return; }
+  el.innerHTML = data.map(p => `
+    <div class="glass item-row">
+      <div class="ico-box"><i class="bi bi-image"></i></div>
+      <div class="flex-grow-1">
+        <div class="fw-bold">${p.title}</div>
+        <div style="font-size:.78rem;color:var(--dim)">${p.category}</div>
+      </div>
+      <button onclick="delPort('${p.id}')" style="background:none;border:none;color:#ff6b6b;cursor:pointer"><i class="bi bi-trash"></i></button>
+    </div>
+  `).join('');
+}
+
+async function addPortfolio() {
+  const payload = {
+    title:document.getElementById('port-title').value, category:document.getElementById('port-cat').value,
+    image_url:document.getElementById('port-img').value, description:document.getElementById('port-desc').value
+  };
+  const r = await fetch(`${API}/api/admin/portfolio`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
+  if(r.ok) { closeModal(); loadPortfolio(); }
+}
+
+async function delPort(id) {
+  const {isConfirmed} = await Swal.fire({title:"O'chirilsinmi?",icon:'warning',showCancelButton:true,confirmButtonColor:'#ff6b6b',background:'#101018',color:'#fff'});
+  if(!isConfirmed) return;
+  await fetch(`${API}/api/admin/portfolio/${id}`,{method:'DELETE'});
+  loadPortfolio();
+}
+
+// Boot
+document.addEventListener('DOMContentLoaded', () => { loadStats(); loadOrders(); });
+</script>
+</body>
+</html>
